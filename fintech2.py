@@ -36,43 +36,6 @@ df.dtypes
 # ## Checking Missing Values
 
 df.isnull().sum()
-
-# ### Checking Missing Value Distribution Plot
-#sns.distplot(df[''])
-#df.dtypes
-
-# ## Impute Missing Values
-
-#Separating categorical and numerical columns
-
-
-#for col in df:
-#    if df[col].isnull().any():
-#        if col in cat_cols:
-#            df[col] = df[col].fillna(df[col].mode()[0])
-#        else:
-#            df[col] = df[col].fillna(df[col].median())
-
-
-#df.isnull().sum()
-
-# ## Outlier Detection
-
-
-# ### 
-
-
-# ## Handle Inconsistent Data
-
-
-
-# # Feature Engineering
-# ## Binning Variable
-
-#Binning variables become categorical variables
-
-
-
 dt = pd.read_csv('top_screens.csv')
 top_screens = dt['top_screens']
 
@@ -179,36 +142,42 @@ train_smote_Y = pd.DataFrame(data = train_smote_Y,columns=target_col)
 train_smote_Y['enrolled'].value_counts()
 
 
-from sklearn.linear_model import LogisticRegression
-classifier = LogisticRegression(random_state = 0, solver = 'liblinear',
-                                penalty = 'l1')
-classifier.fit(train_X, train_Y)
+from sklearn.ensemble import RandomForestClassifier
 
-y_pred = classifier.predict(test_X)
+rfc=RandomForestClassifier(random_state=123)
+param_grid = { 
+    'n_estimators': [200, 500,1000],
+    'max_features': ['auto','log2'],
+    'criterion' :['entropy','gini']
+}
 
-#Evaluate model using confusion matrix
-from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
-cm = confusion_matrix(test_Y, y_pred)
-print(classification_report(test_Y, y_pred))
+from sklearn.model_selection import GridSearchCV
+CV_rfc = GridSearchCV(estimator=rfc, param_grid=param_grid, cv= 3)
+CV_rfc.fit(train_smote_X, train_smote_Y)
 
-#Using accuracy_score
-evaluasi = accuracy_score(test_Y, y_pred)
-print('Accuracy:{:.2f}'.format(evaluasi*100))
+CV_rfc.best_params_
 
-#Seaborn for CM
-cm_label = pd.DataFrame(cm, columns = np.unique(test_Y),
-                        index = np.unique(test_Y))
-cm_label.index.name = 'Aktual'
-cm_label.columns.name = 'Prediksi'
-sns.heatmap(cm_label, annot=True, cmap = 'Reds', fmt = 'g')
+y_pred_rfc=CV_rfc.predict(test_X)
 
-#Validate data with 10-fold cross validation
-from sklearn.model_selection import cross_val_score
-accuracies = cross_val_score(estimator = classifier, 
-                             X = train_smote_X, y = train_smote_Y,
-                             cv = 10)
-accuracies.mean()
-accuracies.std()
-accuracies.std()
-print('Accuracy Logistic Regression = {:.2f} +/- {:.2f}'.format(accuracies.mean()*100,
-                                                               accuracies.std()*100))
+print("Accuracy for Random Forest on CV data: ",accuracy_score(test_Y,y_pred_rfc))
+
+from sklearn.metrics import classification_report
+target_names = ['No','Yes']
+print(classification_report(test_Y, y_pred_rfc, target_names=target_names))
+
+CF=confusion_matrix(test_Y, np.round(y_pred_rfc))
+sns.heatmap(CF, annot=True, cmap = 'Reds', fmt = 'g')
+
+from sklearn.metrics import roc_curve
+# Generate ROC curve values: fpr, tpr, thresholds
+fpr, tpr, thresholds = roc_curve(test_Y, y_pred_rfc)
+# Plot ROC curve
+plt.plot([0, 1], [0, 1], 'k--')
+plt.plot(fpr, tpr)
+plt.xlabel('False Positive Rate')
+plt.ylabel('True Positive Rate')
+plt.title('ROC Curve')
+plt.show()
+
+from sklearn.metrics import roc_auc_score
+roc_auc_score(test_Y,y_pred_rfc)
