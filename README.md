@@ -6,7 +6,7 @@ This project to determine the users who have potential to subscribe. The fintech
 - not subscribed
 - potential to subscribe
 
-I am performing comprehensive EDA on fintech dataset to understand important variables, feature engineering and ensembled machine learning models to predict the users who have potential to subscribe. The model used for this project is logistic regression and random forest.
+I am performing comprehensive EDA on fintech dataset to understand important variables, feature engineering and apply machine learning models to predict the users who have potential to subscribe. The model used for this project is logistic regression and random forest.
 
 ## Data Overview
 
